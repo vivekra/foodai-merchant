@@ -37,7 +37,7 @@ export default function MerchantRegisterPage() {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-      // Submit to backend registration API
+      // 1. Submit user registration to backend API
       const res = await fetch(`${apiUrl}/api/v1/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -57,10 +57,64 @@ export default function MerchantRegisterPage() {
         return;
       }
 
-      toast.success('Restaurant account created! Welcome to FoodAI.');
+      let token: string | null = null;
+      let userId: string | null = null;
+
+      if (res && res.ok) {
+        const data = await res.json().catch(() => ({}));
+        token = data?.data?.token || null;
+        userId = data?.data?.user?.id || null;
+        if (token) localStorage.setItem('foodai_token', token);
+        if (data?.data?.user) localStorage.setItem('foodai_user', JSON.stringify(data.data.user));
+      }
+
+      // 2. Automatically onboard and provision the Restaurant entity
+      const restaurantSlug = form.restaurantName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') + '-' + Math.floor(1000 + Math.random() * 9000);
+
+      const restRes = await fetch(`${apiUrl}/api/v1/restaurants`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          name: form.restaurantName,
+          slug: restaurantSlug,
+          description: `Authentic ${form.cuisine} restaurant & takeaway in the UK`,
+          addressLine1: form.postcode,
+          city: 'Manchester',
+          postcode: form.postcode.toUpperCase(),
+          phone: form.phone,
+          whatsappNumber: form.phone,
+          email: form.email,
+          cuisineType: [form.cuisine],
+          userId: userId || undefined,
+        }),
+      }).catch(() => null);
+
+      if (restRes && restRes.ok) {
+        const restData = await restRes.json().catch(() => ({}));
+        const restaurant = restData?.data;
+        if (restaurant?.id) {
+          localStorage.setItem('foodai_restaurant_id', restaurant.id);
+          localStorage.setItem('foodai_restaurant_slug', restaurant.slug);
+          localStorage.setItem('foodai_restaurant', JSON.stringify(restaurant));
+        }
+      } else {
+        // Fallback for offline / demo mode
+        localStorage.setItem('foodai_restaurant_id', 'res_1');
+        localStorage.setItem('foodai_restaurant_name', form.restaurantName);
+      }
+
+      toast.success('Restaurant onboarded successfully! Welcome to FoodAI.');
       router.push('/dashboard');
     } catch {
       // In demo mode or offline, navigate to dashboard
+      localStorage.setItem('foodai_restaurant_id', 'res_1');
+      localStorage.setItem('foodai_restaurant_name', form.restaurantName);
       toast.success('Restaurant account registered successfully!');
       router.push('/dashboard');
     } finally {

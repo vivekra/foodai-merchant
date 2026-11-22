@@ -35,6 +35,30 @@ export default function MerchantLoginPage() {
         return;
       }
 
+      if (res && res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const token = data?.data?.token;
+        const user = data?.data?.user;
+
+        if (token) localStorage.setItem('foodai_token', token);
+        if (user) localStorage.setItem('foodai_user', JSON.stringify(user));
+
+        // Fetch user profile to retrieve linked restaurantId
+        if (token) {
+          const meRes = await fetch(`${apiUrl}/api/v1/auth/me`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }).catch(() => null);
+
+          if (meRes && meRes.ok) {
+            const meData = await meRes.json().catch(() => ({}));
+            const restaurantUser = meData?.data?.user?.restaurantUsers?.[0];
+            if (restaurantUser?.restaurantId) {
+              localStorage.setItem('foodai_restaurant_id', restaurantUser.restaurantId);
+            }
+          }
+        }
+      }
+
       toast.success('Welcome back!');
       router.push('/dashboard');
     } catch {
