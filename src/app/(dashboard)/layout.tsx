@@ -34,6 +34,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const liveOrderCount = 4;
 
   const navLinks = [
+    { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
     {
       label: 'Live Orders',
       href: '/orders',
