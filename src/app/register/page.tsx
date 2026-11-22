@@ -14,7 +14,7 @@ import {
   Truck,
   Loader2,
 } from 'lucide-react';
-import { Button, Input } from '@/components/ui';
+import { Button, Input, Badge } from '@/components/ui';
 import { toast } from 'sonner';
 
 export default function MerchantRegisterPage() {

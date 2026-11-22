@@ -4,6 +4,8 @@ node_modules/
 # TypeScript compiler output (adjust if your tsconfig uses a different outDir)
 dist/
 build/
+# Next.js build output
+.next/
 out/
 *.tsbuildinfo
 
