@@ -30,48 +30,12 @@ export interface MenuItem {
 const AVAILABLE_DIETARY = ['Vegetarian', 'Vegan', 'Gluten-Free', 'Halal', 'Spicy'];
 
 export default function MerchantMenuPage() {
-  const [items, setItems] = useState<MenuItem[]>([
-    {
-      id: 'item_1',
-      name: 'Margherita D.O.P.',
-      category: 'Pizzas',
-      priceGbp: 11.95,
-      available: true,
-      description: 'San Marzano tomatoes, buffalo mozzarella D.O.P., fresh basil, extra virgin olive oil.',
-      dietary: ['Vegetarian'],
-    },
-    {
-      id: 'item_2',
-      name: 'Diavola Hot Honey',
-      category: 'Pizzas',
-      priceGbp: 13.95,
-      available: true,
-      description: 'Spianata calabrese salami, fresh fior di latte, scotch bonnet infused wildflower honey.',
-      dietary: ['Spicy'],
-    },
-    {
-      id: 'item_3',
-      name: 'Truffle & Wild Mushroom',
-      category: 'Pizzas',
-      priceGbp: 14.5,
-      available: true,
-      description: 'White base with black truffle cream, roasted wild mushrooms, parmesan flakes.',
-      dietary: ['Vegetarian'],
-    },
-    {
-      id: 'item_4',
-      name: 'Beef Shin Ragu Tagliatelle',
-      category: 'Pastas',
-      priceGbp: 15.5,
-      available: false,
-      description: 'Slow-cooked 8-hour British beef shin, handmade egg pasta, aged pecorino.',
-      dietary: [],
-    },
-  ]);
+  const [items, setItems] = useState<MenuItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [restaurantId, setRestaurantId] = useState('res_1');
+  const [restaurantId, setRestaurantId] = useState('');
 
   // Form State
   const [newDish, setNewDish] = useState({
@@ -85,14 +49,18 @@ export default function MerchantMenuPage() {
 
   // Load existing menu from API if available
   useEffect(() => {
-    const storedResId = localStorage.getItem('foodai_restaurant_id') || 'res_1';
+    const storedResId = localStorage.getItem('foodai_restaurant_id');
+    if (!storedResId) {
+      setIsLoading(false);
+      return;
+    }
     setRestaurantId(storedResId);
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
     fetch(`${apiUrl}/api/v1/menu/${storedResId}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data?.data && Array.isArray(data.data) && data.data.length > 0) {
+        if (data?.data && Array.isArray(data.data)) {
           const apiItems: MenuItem[] = [];
           data.data.forEach((cat: any) => {
             if (cat.items && Array.isArray(cat.items)) {
@@ -110,13 +78,14 @@ export default function MerchantMenuPage() {
               });
             }
           });
-          if (apiItems.length > 0) {
-            setItems(apiItems);
-          }
+          setItems(apiItems);
         }
       })
       .catch(() => {
-        // Fall back to default seed items
+        // Empty on failure
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   }, []);
 
@@ -317,63 +286,90 @@ export default function MerchantMenuPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {items.map((item) => (
-                <tr key={item.id} className="hover:bg-muted/20 transition-colors">
-                  <td className="px-6 py-4">
-                    <p className="font-semibold text-foreground text-sm">{item.name}</p>
-                    {item.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-1 max-w-sm mt-0.5">
-                        {item.description}
-                      </p>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <Badge variant="outline" className="text-xs font-semibold">
-                      {item.category}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 font-bold text-foreground">£{item.priceGbp.toFixed(2)}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-1">
-                      {item.dietary.length > 0 ? (
-                        item.dietary.map((d) => (
-                          <span
-                            key={d}
-                            className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-700 dark:text-orange-400"
-                          >
-                            {d}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <p className="text-xs font-semibold">Loading restaurant menu...</p>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <button
-                      type="button"
-                      onClick={() => toggleAvailability(item.id)}
-                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                        item.available
-                          ? 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20'
-                          : 'bg-red-500/10 text-red-600 hover:bg-red-500/20'
-                      }`}
-                    >
-                      {item.available ? 'In Stock' : '86 / Sold Out'}
-                    </button>
-                  </td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteItem(item.id)}
-                      className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                      title="Delete dish"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                </tr>
+              ) : items.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      <div className="h-12 w-12 rounded-2xl bg-orange-500/10 text-orange-600 flex items-center justify-center mx-auto">
+                        <UtensilsCrossed className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-foreground text-sm">No dishes added yet</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Click "Add New Dish" above to create your restaurant's menu offerings.
+                        </p>
+                      </div>
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                items.map((item) => (
+                  <tr key={item.id} className="hover:bg-muted/20 transition-colors">
+                    <td className="px-6 py-4">
+                      <p className="font-semibold text-foreground text-sm">{item.name}</p>
+                      {item.description && (
+                        <p className="text-xs text-muted-foreground line-clamp-1 max-w-sm mt-0.5">
+                          {item.description}
+                        </p>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <Badge variant="outline" className="text-xs font-semibold">
+                        {item.category}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 font-bold text-foreground">£{item.priceGbp.toFixed(2)}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1">
+                        {item.dietary.length > 0 ? (
+                          item.dietary.map((d) => (
+                            <span
+                              key={d}
+                              className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-700 dark:text-orange-400"
+                            >
+                              {d}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        type="button"
+                        onClick={() => toggleAvailability(item.id)}
+                        className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                          item.available
+                            ? 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20'
+                            : 'bg-red-500/10 text-red-600 hover:bg-red-500/20'
+                        }`}
+                      >
+                        {item.available ? 'In Stock' : '86 / Sold Out'}
+                      </button>
+                    </td>
+                    <td className="px-6 py-4 text-right space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteItem(item.id)}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        title="Delete dish"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

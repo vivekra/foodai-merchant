@@ -28,42 +28,61 @@ export default function MerchantLoginPage() {
         body: JSON.stringify(form),
       }).catch(() => null);
 
-      if (res && !res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        toast.error(errorData.message || 'Invalid email or password');
+      if (!res || !res.ok) {
+        const errorData = await res?.json().catch(() => ({}));
+        toast.error(errorData?.message || 'Invalid email or password');
         setLoading(false);
         return;
       }
 
-      if (res && res.ok) {
-        const data = await res.json().catch(() => ({}));
-        const token = data?.data?.token;
-        const user = data?.data?.user;
+      const data = await res.json().catch(() => ({}));
+      const token = data?.data?.token;
+      const user = data?.data?.user;
 
-        if (token) localStorage.setItem('foodai_token', token);
-        if (user) localStorage.setItem('foodai_user', JSON.stringify(user));
+      if (!token || !user) {
+        toast.error('Authentication failed: missing session payload from server');
+        setLoading(false);
+        return;
+      }
 
-        // Fetch user profile to retrieve linked restaurantId
-        if (token) {
-          const meRes = await fetch(`${apiUrl}/api/v1/auth/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).catch(() => null);
+      // 1. Store session tokens in localStorage and cookies for edge middleware
+      localStorage.setItem('foodai_token', token);
+      localStorage.setItem('foodai_user', JSON.stringify(user));
+      document.cookie = `foodai_token=${token}; path=/; max-age=604800; SameSite=Lax`;
 
-          if (meRes && meRes.ok) {
-            const meData = await meRes.json().catch(() => ({}));
-            const restaurantUser = meData?.data?.user?.restaurantUsers?.[0];
-            if (restaurantUser?.restaurantId) {
-              localStorage.setItem('foodai_restaurant_id', restaurantUser.restaurantId);
+      // 2. Fetch user profile to retrieve linked restaurant details
+      try {
+        const meRes = await fetch(`${apiUrl}/api/v1/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (meRes.ok) {
+          const meData = await meRes.json();
+          const restaurantUser = meData?.data?.user?.restaurantUsers?.[0];
+          if (restaurantUser?.restaurantId) {
+            localStorage.setItem('foodai_restaurant_id', restaurantUser.restaurantId);
+            if (restaurantUser.restaurant?.name) {
+              localStorage.setItem('foodai_restaurant_name', restaurantUser.restaurant.name);
+            }
+            if (restaurantUser.restaurant?.slug) {
+              localStorage.setItem('foodai_restaurant_slug', restaurantUser.restaurant.slug);
             }
           }
         }
+      } catch {
+        // Non-fatal, profile can load inside dashboard
       }
 
-      toast.success('Welcome back!');
-      router.push('/dashboard');
+      toast.success(`Welcome back, ${user.name || 'Merchant'}!`);
+
+      // 3. Route according to security role
+      if (user.role === 'SUPER_ADMIN') {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
+      }
     } catch {
-      toast.success('Welcome back!');
-      router.push('/dashboard');
+      toast.error('Authentication service unreachable. Please try again.');
     } finally {
       setLoading(false);
     }

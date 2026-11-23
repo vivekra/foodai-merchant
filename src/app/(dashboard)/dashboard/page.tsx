@@ -19,8 +19,8 @@ import {
 import { Button, Badge } from '@/components/ui';
 
 export default function MerchantDashboardOverviewPage() {
-  const [restaurantName, setRestaurantName] = useState('The Artisan Italian & Pizza Bar');
-  const [restaurantId, setRestaurantId] = useState('res_the_artisan');
+  const [restaurantName, setRestaurantName] = useState('Restaurant Dashboard');
+  const [restaurantId, setRestaurantId] = useState('');
 
   React.useEffect(() => {
     const name = localStorage.getItem('foodai_restaurant_name');

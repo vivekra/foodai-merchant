@@ -50,23 +50,27 @@ export default function MerchantRegisterPage() {
         }),
       }).catch(() => null);
 
-      if (res && !res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        toast.error(errorData.message || 'Registration failed, please check your details');
+      if (!res || !res.ok) {
+        const errorData = await res?.json().catch(() => ({}));
+        toast.error(errorData?.message || 'Registration failed, please check your details');
         setLoading(false);
         return;
       }
 
-      let token: string | null = null;
-      let userId: string | null = null;
+      const data = await res.json().catch(() => ({}));
+      const token = data?.data?.token;
+      const user = data?.data?.user;
 
-      if (res && res.ok) {
-        const data = await res.json().catch(() => ({}));
-        token = data?.data?.token || null;
-        userId = data?.data?.user?.id || null;
-        if (token) localStorage.setItem('foodai_token', token);
-        if (data?.data?.user) localStorage.setItem('foodai_user', JSON.stringify(data.data.user));
+      if (!token || !user) {
+        toast.error('Failed to obtain authentication session from server');
+        setLoading(false);
+        return;
       }
+
+      localStorage.setItem('foodai_token', token);
+      localStorage.setItem('foodai_user', JSON.stringify(user));
+      document.cookie = `foodai_token=${token}; path=/; max-age=604800; SameSite=Lax`;
+      const userId = user.id;
 
       // 2. Automatically onboard and provision the Restaurant entity
       const restaurantSlug = form.restaurantName
@@ -78,7 +82,7 @@ export default function MerchantRegisterPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           name: form.restaurantName,
@@ -87,8 +91,8 @@ export default function MerchantRegisterPage() {
           addressLine1: form.postcode,
           city: 'Manchester',
           postcode: form.postcode.toUpperCase(),
-          phone: form.phone,
-          whatsappNumber: form.phone,
+          phone: form.phone.replace(/\s+/g, ''),
+          whatsappNumber: form.phone.replace(/\s+/g, ''),
           email: form.email,
           cuisineType: [form.cuisine],
           userId: userId || undefined,
@@ -100,23 +104,18 @@ export default function MerchantRegisterPage() {
         const restaurant = restData?.data;
         if (restaurant?.id) {
           localStorage.setItem('foodai_restaurant_id', restaurant.id);
+          localStorage.setItem('foodai_restaurant_name', restaurant.name || form.restaurantName);
           localStorage.setItem('foodai_restaurant_slug', restaurant.slug);
           localStorage.setItem('foodai_restaurant', JSON.stringify(restaurant));
         }
       } else {
-        // Fallback for offline / demo mode
-        localStorage.setItem('foodai_restaurant_id', 'res_1');
         localStorage.setItem('foodai_restaurant_name', form.restaurantName);
       }
 
       toast.success('Restaurant onboarded successfully! Welcome to FoodAI.');
       router.push('/dashboard');
     } catch {
-      // In demo mode or offline, navigate to dashboard
-      localStorage.setItem('foodai_restaurant_id', 'res_1');
-      localStorage.setItem('foodai_restaurant_name', form.restaurantName);
-      toast.success('Restaurant account registered successfully!');
-      router.push('/dashboard');
+      toast.error('Unable to reach registration server. Please try again.');
     } finally {
       setLoading(false);
     }
