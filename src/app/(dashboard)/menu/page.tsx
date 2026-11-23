@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Button, Input, Badge } from '@/components/ui';
 import { toast } from 'sonner';
+import { getApiUrl } from '@/lib/api-config';
 
 export interface MenuItem {
   id: string;
@@ -56,7 +57,7 @@ export default function MerchantMenuPage() {
     }
     setRestaurantId(storedResId);
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const apiUrl = getApiUrl();
     fetch(`${apiUrl}/api/v1/menu/${storedResId}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -99,7 +100,7 @@ export default function MerchantMenuPage() {
     );
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = getApiUrl();
       const token = localStorage.getItem('foodai_token');
       await fetch(`${apiUrl}/api/v1/menu/item/${id}/availability`, {
         method: 'PATCH',
@@ -121,7 +122,7 @@ export default function MerchantMenuPage() {
     setItems((prev) => prev.filter((i) => i.id !== id));
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = getApiUrl();
       const token = localStorage.getItem('foodai_token');
       await fetch(`${apiUrl}/api/v1/menu/item/${id}`, {
         method: 'DELETE',
@@ -172,7 +173,7 @@ export default function MerchantMenuPage() {
     };
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = getApiUrl();
       const token = localStorage.getItem('foodai_token');
 
       // 1. Create category if needed or find existing

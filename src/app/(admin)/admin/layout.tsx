@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { toast } from 'sonner';
+import { getApiUrl } from '@/lib/api-config';
 
 export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -64,15 +65,30 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     setIsLoggingIn(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = getApiUrl();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+
       const res = await fetch(`${apiUrl}/api/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(loginForm),
-      }).catch(() => null);
+        signal: controller.signal,
+      }).catch((err) => {
+        console.error('Admin login fetch error:', err);
+        return null;
+      });
 
-      if (!res || !res.ok) {
-        const errorData = await res?.json().catch(() => ({}));
+      clearTimeout(timeoutId);
+
+      if (!res) {
+        toast.error('Unable to connect to authentication server. Please check your network.');
+        setIsLoggingIn(false);
+        return;
+      }
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
         toast.error(errorData?.message || 'Invalid administrator credentials');
         setIsLoggingIn(false);
         return;
@@ -96,8 +112,8 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
       setAdminUser(user);
       setIsAuthorized(true);
       toast.success('Super Admin authenticated successfully!');
-    } catch {
-      toast.error('Authentication service unreachable');
+    } catch (err: any) {
+      toast.error(err?.name === 'AbortError' ? 'Login request timed out' : 'Authentication service unreachable');
     } finally {
       setIsLoggingIn(false);
     }

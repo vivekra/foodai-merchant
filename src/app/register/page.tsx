@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Button, Input, Badge } from '@/components/ui';
 import { toast } from 'sonner';
+import { getApiUrl } from '@/lib/api-config';
 
 export default function MerchantRegisterPage() {
   const router = useRouter();
@@ -35,7 +36,7 @@ export default function MerchantRegisterPage() {
     setLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = getApiUrl();
 
       // 1. Submit user registration to backend API
       const res = await fetch(`${apiUrl}/api/v1/auth/register`, {

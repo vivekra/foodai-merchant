@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Button, Badge } from '@/components/ui';
 import { toast } from 'sonner';
+import { getApiUrl, getSocketUrl } from '@/lib/api-config';
 
 type OrderTab = 'PENDING' | 'ACCEPTED' | 'PREPARING' | 'READY' | 'COMPLETED';
 
@@ -106,7 +107,7 @@ export default function MerchantOrdersPage() {
     const currentResId = localStorage.getItem('foodai_restaurant_id') || 'res_1';
     setRestaurantId(currentResId);
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const apiUrl = getApiUrl();
     const token = localStorage.getItem('foodai_token');
 
     // Fetch initial orders scoped by restaurantId
@@ -166,7 +167,7 @@ export default function MerchantOrdersPage() {
 
   const handleUpdateStatus = async (orderId: string, status: OrderTab, estimatedPrepTime = 20) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = getApiUrl();
       await fetch(`${apiUrl}/api/v1/orders/${orderId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

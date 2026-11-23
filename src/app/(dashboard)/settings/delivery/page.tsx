@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Truck, ShieldCheck, KeyRound, AlertTriangle, Check, Loader2 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { toast } from 'sonner';
+import { getApiUrl } from '@/lib/api-config';
 
 interface ProviderConfig {
   id: 'uber_direct' | 'stuart' | 'deliveroo_express' | 'gophr' | 'shipday';
@@ -81,7 +82,7 @@ export default function DeliverySettingsPage() {
     setIsSaving(true);
     try {
       const restaurantId = localStorage.getItem('foodai_restaurant_id') || 'res_1';
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = getApiUrl();
       const token = localStorage.getItem('foodai_token');
       await fetch(`${apiUrl}/api/v1/restaurants/${restaurantId}/delivery-config`, {
         method: 'PUT',

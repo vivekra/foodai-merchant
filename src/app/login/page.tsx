@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { UtensilsCrossed, ArrowRight, Loader2, Lock, Mail } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { toast } from 'sonner';
+import { getApiUrl } from '@/lib/api-config';
 
 export default function MerchantLoginPage() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function MerchantLoginPage() {
     setLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = getApiUrl();
 
       const res = await fetch(`${apiUrl}/api/v1/auth/login`, {
         method: 'POST',
