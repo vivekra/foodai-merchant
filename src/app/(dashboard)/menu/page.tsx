@@ -89,7 +89,7 @@ export default function MerchantMenuPage() {
     setRestaurantId(storedResId);
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    fetch(`${apiUrl}/api/v1/menu/restaurant/${storedResId}`)
+    fetch(`${apiUrl}/api/v1/menu/${storedResId}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.data && Array.isArray(data.data) && data.data.length > 0) {
@@ -132,8 +132,8 @@ export default function MerchantMenuPage() {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       const token = localStorage.getItem('foodai_token');
-      await fetch(`${apiUrl}/api/v1/menu/items/${id}/availability`, {
-        method: 'PUT',
+      await fetch(`${apiUrl}/api/v1/menu/item/${id}/availability`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -154,7 +154,7 @@ export default function MerchantMenuPage() {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       const token = localStorage.getItem('foodai_token');
-      await fetch(`${apiUrl}/api/v1/menu/items/${id}`, {
+      await fetch(`${apiUrl}/api/v1/menu/item/${id}`, {
         method: 'DELETE',
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -208,7 +208,7 @@ export default function MerchantMenuPage() {
 
       // 1. Create category if needed or find existing
       let categoryId = 'cat_1';
-      const catRes = await fetch(`${apiUrl}/api/v1/menu/categories`, {
+      const catRes = await fetch(`${apiUrl}/api/v1/menu/category`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -226,7 +226,7 @@ export default function MerchantMenuPage() {
       }
 
       // 2. Create the menu item
-      const itemRes = await fetch(`${apiUrl}/api/v1/menu/items`, {
+      const itemRes = await fetch(`${apiUrl}/api/v1/menu/item`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
