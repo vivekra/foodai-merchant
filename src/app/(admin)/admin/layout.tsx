@@ -82,7 +82,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
       clearTimeout(timeoutId);
 
       if (!res) {
-        toast.error('Unable to connect to authentication server. Please check your network.');
+        toast.error(`Unable to connect to authentication server at ${apiUrl}. Please check your connection.`);
         setIsLoggingIn(false);
         return;
       }

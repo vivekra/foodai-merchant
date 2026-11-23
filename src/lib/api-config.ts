@@ -4,25 +4,38 @@
  * and falls back to localhost during local development.
  */
 export function getApiUrl(): string {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
+  // 1. In browser, if on dqserv.com, ALWAYS use the official dqserv API domain
   if (typeof window !== 'undefined') {
     if (window.location.hostname.includes('dqserv.com')) {
       return 'https://foodai-api.dqserv.com';
     }
   }
-  return 'http://localhost:3001';
+
+  // 2. If valid env var is provided (and not stale onrender URL)
+  if (
+    process.env.NEXT_PUBLIC_API_URL &&
+    !process.env.NEXT_PUBLIC_API_URL.includes('onrender.com')
+  ) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+
+  // 3. Fallback to official production API
+  return 'https://foodai-api.dqserv.com';
 }
 
 export function getSocketUrl(): string {
-  if (process.env.NEXT_PUBLIC_SOCKET_URL) {
-    return process.env.NEXT_PUBLIC_SOCKET_URL;
-  }
   if (typeof window !== 'undefined') {
     if (window.location.hostname.includes('dqserv.com')) {
       return 'https://foodai-api.dqserv.com';
     }
   }
-  return 'http://localhost:3001';
+
+  if (
+    process.env.NEXT_PUBLIC_SOCKET_URL &&
+    !process.env.NEXT_PUBLIC_SOCKET_URL.includes('onrender.com')
+  ) {
+    return process.env.NEXT_PUBLIC_SOCKET_URL;
+  }
+
+  return 'https://foodai-api.dqserv.com';
 }

@@ -6,7 +6,7 @@ const cspHeader = `
   style-src 'self' 'unsafe-inline' https:;
   img-src 'self' blob: data: https:;
   font-src 'self' data: https:;
-  connect-src 'self' https://foodai-api.dqserv.com wss://foodai-api.dqserv.com https://*.dqserv.com http://localhost:* ws://localhost:*;
+  connect-src 'self' https://foodai-api.dqserv.com wss://foodai-api.dqserv.com https://*.dqserv.com https://foodai-api.onrender.com http://localhost:* ws://localhost:*;
   frame-ancestors 'none';
   form-action 'self';
   base-uri 'self';
@@ -15,6 +15,10 @@ const cspHeader = `
 
 const nextConfig: NextConfig = {
   output: 'standalone', // For Docker
+  env: {
+    NEXT_PUBLIC_API_URL: 'https://foodai-api.dqserv.com',
+    NEXT_PUBLIC_SOCKET_URL: 'https://foodai-api.dqserv.com',
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.cloudflare.com' },
