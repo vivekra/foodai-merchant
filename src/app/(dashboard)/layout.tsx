@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -29,6 +29,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(true);
+  const [restaurantName, setRestaurantName] = useState('The Artisan Pizza Bar');
+  const [userInitials, setUserInitials] = useState('AP');
+
+  useEffect(() => {
+    const name = localStorage.getItem('foodai_restaurant_name');
+    if (name) {
+      setRestaurantName(name);
+      const initials = name
+        .split(' ')
+        .map((w) => w[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+      setUserInitials(initials || 'AP');
+    }
+  }, []);
 
   // Live order badge count
   const liveOrderCount = 4;
@@ -148,11 +164,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="p-4 border-t border-gray-100">
           <div className="flex items-center gap-3 p-2 rounded-xl bg-gray-50">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-xs">
-              AP
+              {userInitials}
             </div>
             <div className="flex-1 truncate">
-              <p className="text-xs font-bold text-gray-900 truncate">The Artisan Pizza Bar</p>
-              <p className="text-[11px] text-gray-400 truncate">Manchester Central #01</p>
+              <p className="text-xs font-bold text-gray-900 truncate">{restaurantName}</p>
+              <p className="text-[11px] text-gray-400 truncate">Store Portal Active</p>
             </div>
           </div>
         </div>

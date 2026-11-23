@@ -100,9 +100,44 @@ export default function MerchantOrdersPage() {
     },
   ]);
 
-  const restaurantId = 'res_1';
+  const [restaurantId, setRestaurantId] = useState('res_1');
 
   useEffect(() => {
+    const currentResId = localStorage.getItem('foodai_restaurant_id') || 'res_1';
+    setRestaurantId(currentResId);
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const token = localStorage.getItem('foodai_token');
+
+    // Fetch initial orders scoped by restaurantId
+    fetch(`${apiUrl}/api/v1/orders?restaurantId=${currentResId}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.data && Array.isArray(data.data) && data.data.length > 0) {
+          const mapped: Order[] = data.data.map((o: any) => ({
+            id: o.id,
+            orderNumber: o.orderNumber,
+            orderType: o.orderType || 'DELIVERY',
+            status: o.status,
+            customerName: o.deliveryAddress?.recipientName || (o.table?.tableNumber ? `Table ${o.table.tableNumber}` : 'Customer'),
+            customerPhone: o.deliveryAddress?.contactPhone || o.customerPhone,
+            totalGbp: Number(o.total || 0),
+            createdAt: 'Just now',
+            tableNumber: o.table?.tableNumber,
+            items: (o.items || []).map((i: any) => ({
+              name: i.menuItem?.name || i.name || 'Dish',
+              quantity: i.quantity || 1,
+            })),
+          }));
+          setOrders(mapped);
+        }
+      })
+      .catch(() => {
+        // Retain seed orders in demo / offline mode
+      });
+
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
     const socket: Socket = io(socketUrl, {
       transports: ['websocket'],
@@ -110,7 +145,7 @@ export default function MerchantOrdersPage() {
     });
 
     socket.on('connect', () => {
-      socket.emit('join:kitchen', { restaurantId });
+      socket.emit('join:kitchen', { restaurantId: currentResId });
     });
 
     socket.on('order:new', (newOrder: Order) => {
@@ -127,7 +162,7 @@ export default function MerchantOrdersPage() {
     return () => {
       socket.disconnect();
     };
-  }, [restaurantId]);
+  }, []);
 
   const handleUpdateStatus = async (orderId: string, status: OrderTab, estimatedPrepTime = 20) => {
     try {

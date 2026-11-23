@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   ShoppingBag,
@@ -19,6 +19,15 @@ import {
 import { Button, Badge } from '@/components/ui';
 
 export default function MerchantDashboardOverviewPage() {
+  const [restaurantName, setRestaurantName] = useState('The Artisan Italian & Pizza Bar');
+  const [restaurantId, setRestaurantId] = useState('res_the_artisan');
+
+  React.useEffect(() => {
+    const name = localStorage.getItem('foodai_restaurant_name');
+    const id = localStorage.getItem('foodai_restaurant_id');
+    if (name) setRestaurantName(name);
+    if (id) setRestaurantId(id);
+  }, []);
   const stats = [
     {
       title: "Today's Revenue",
@@ -142,7 +151,7 @@ export default function MerchantDashboardOverviewPage() {
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            The Artisan Italian &amp; Pizza Bar — Store ID: <span className="font-mono text-foreground font-semibold">res_the_artisan</span>
+            {restaurantName} — Store ID: <span className="font-mono text-foreground font-semibold">{restaurantId}</span>
           </p>
         </div>
 

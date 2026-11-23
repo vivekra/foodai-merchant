@@ -1,13 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QrCode, Download, Printer, Plus } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { toast } from 'sonner';
 
 export default function QrSettingsPage() {
   const [tableCount, setTableCount] = useState(12);
-  const restaurantSlug = 'the-artisan-pizza';
+  const [restaurantSlug, setRestaurantSlug] = useState('the-artisan-pizza');
+
+  useEffect(() => {
+    const slug = localStorage.getItem('foodai_restaurant_slug');
+    if (slug) setRestaurantSlug(slug);
+  }, []);
 
   const downloadTableQr = (tableNum: number) => {
     toast.success(`Generated printable QR for Table #${tableNum}`);

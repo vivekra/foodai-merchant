@@ -80,11 +80,15 @@ export default function DeliverySettingsPage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const restaurantId = 'res_1';
+      const restaurantId = localStorage.getItem('foodai_restaurant_id') || 'res_1';
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const token = localStorage.getItem('foodai_token');
       await fetch(`${apiUrl}/api/v1/restaurants/${restaurantId}/delivery-config`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ providers }),
       });
       toast.success('Delivery integrations updated successfully');
